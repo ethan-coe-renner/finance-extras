@@ -1,0 +1,6 @@
+#+title: Finance Extras
+
+This repository contains some extra tools I use to manage my finances. These are mostly for use with [[https://hledger.org/][hledger]], which I use to keep track of my budget.
+
+* [[file:envelope.org][envelope.org]]
+This org file describes and implements an envelope style budgeting system for hledger.
