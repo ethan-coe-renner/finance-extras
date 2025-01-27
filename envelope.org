@@ -1,0 +1,145 @@
+#+title: Envelope Budgeting with Hledger
+#+PROPERTY: header-args :tangle "envelope.hledger"
+
+This file describes and implements an envelope budgeting system for hledger.
+The ledger snippets herein are tangled to =envelope.hledger= to be included into a journal.
+
+* Filling the Budget
+We separate our assets into two kinds of accounts, "on budget" and "off budget". On budget accounts are named as follows: =assets:b:*=. So, we want our budget total to always equal the total of the accounts matching this pattern. We do this with the following auto posting.
+
+#+begin_src ledger
+= ^assets:b:
+    (budget)    *1
+#+end_src
+
+This adds an unmatched virtual transaction (note the =()=) to any posting that occurs to a =assets:b= account, matching the amount and sign directly into the top level =budget= account.
+
+* Credit Cards
+We always want to have money set aside to pay off all credit cards in our budget. These will go into the =budget:spend:cc= account. Our credit card accounts are all named as =liabilities:cc:*=, so we want to inversely match any posting which occurs to such an account into our =budget:spend:cc= account. We use matching virtual postings (note the =[]=) because we want the money going to/coming from the credit card budget to come from/go to the top level budget (as this is where money will go to from a envelope when a purchase is made with a credit card).
+
+The following auto posting accomplishes this.
+
+#+begin_src ledger
+= ^liabilities:cc
+    [budget]            *1
+    [budget:spend:cc]   *-1
+#+end_src
+
+* Envelopes
+Finally, we define our envelopes. Unfortunately, this is somewhat tedious as we need an auto posting for each envelope. We will use emacs lisp to generate these, but the basic pattern is as follows:
+
+#+begin_src ledger :tangle none
+= ^expenses:envelope
+    [budget:spend:envelope]  *-1
+    [budget]                 *1
+#+end_src
+
+This means that for any posting which affects an expense account with the envelope name (including subaccounts like =expenses:envelope:subaccount=), there will be a transfer from that spending envelope to the top level =budget= account. The credit card rule or the assets rules (defined above) will then transfer that money out of that top level =budget= account.
+
+** Dynamically Generate Auto Postings for Envelopes
+As described above, we have to create separate auto-postings for each envelope. This is tedious and error prone, so lets generate them dynamically.
+
+Here, I define an emacs lisp function which takes a =envelope= as input and returns the string of the auto posting rule.
+
+#+name: generate-envelope
+#+begin_src emacs-lisp :var envelope="default" :tangle none
+(message
+ "
+= ^expenses:%1$s
+    [budget:spend:%1$s]    *-1
+"
+ envelope
+ )
+#+end_src
+
+Now, we can use this rule with =noweb= inside of =ledger= source blocks.
+
+** Defining Envelopes
+Here, I define all my envelopes and give a description of the sort of transactions which should use them.
+
+*** Food
+Food is for groceries and dining.
+
+#+begin_src ledger :noweb yes
+<<generate-envelope(envelope="food")>>
+#+end_src
+
+*** Transportation
+This is for any transportation costs. This will usually be gas, but could include public transit costs or parking fees (not tickets), plane tickets, etc.
+
+#+begin_src ledger :noweb yes
+<<generate-envelope(envelope="transportation")>>
+#+end_src
+
+*** Supplies
+Supplies is a catch all envelope for purchases of household items such as cleaning supplies, dishware, etc. Generally these will be essential items rather than discretionary purchases. These can either be durable items or consumable, though this may be specified using expense subaccounts for tracking.
+
+#+begin_src ledger :noweb yes
+<<generate-envelope(envelope="supplies")>>
+#+end_src
+
+*** Maintenance
+Maintenance funds should be used for fixing things. This will usually be car maintenance.
+
+#+begin_src ledger :noweb yes
+<<generate-envelope(envelope="maintenance")>>
+#+end_src
+
+*** Rent
+Rent funds should be used for monthly rent.
+
+#+begin_src ledger :noweb yes
+<<generate-envelope(envelope="rent")>>
+#+end_src
+
+*** Subscriptions
+Subscriptions funds should be used for various subscriptions. Including streaming, software, deliveries, or membership fees.
+
+#+begin_src ledger :noweb yes
+<<generate-envelope(envelope="subscriptions")>>
+#+end_src
+
+*** Investing
+Investing should be a holding area for funds which will be invested. These will generally be set up as automatic deposits.
+
+#+begin_src ledger :noweb yes
+<<generate-envelope(envelope="investing")>>
+#+end_src
+
+*** Donations
+Donations funds are broad, they can be used for donations to charitable causes, or to open source development projects/developers. Anything where there isn't a direct benefit to myself.
+
+#+begin_src ledger :noweb yes
+<<generate-envelope(envelope="donations")>>
+#+end_src
+
+*** Gifts
+Gifts funds should be used to make purchases intended to benefit others. This is distinct from Donations in that gifts should benefit people people I know personally.
+
+#+begin_src ledger :noweb yes
+<<generate-envelope(envelope="gifts")>>
+#+end_src
+
+*** QOL
+QOL (or "Quality of Life") is a broad catch all category. Vaguely, these funds should be used for self-improvement, broadly considered. I consider this broad enough to be used for new (utilitarian) clothes, haircuts, books, etc. Purchases that are necessary but don't fit in "Supplies" can go here. This is not for discretionary funds, it shouldn't be used for impulse purchases.
+
+#+begin_src ledger :noweb yes
+<<generate-envelope(envelope="qol")>>
+#+end_src
+
+*** Discretionary
+Discretionary funds can be used for anything.
+
+#+begin_src ledger :noweb yes
+<<generate-envelope(envelope="discretionary")>>
+#+end_src
+
+** Catching Unmatched Expenses
+Because we manually create auto posting rules for expenses, there is no guarantee that all expenses will match one of the rules. So, we need one final rule to catch any uncaught expenses.
+
+This rule matches out the =[budget:spend:envelope]  *-1= posting from each of the auto postings. However, if there is a transaction which doesn't match one of those auto postings, it will not have such a posting. So, hledger will warn of an unmatched transaction, and we can go fix it by amending the expense to one which will match one of the envelope rules.
+
+#+begin_src ledger
+= ^expenses:
+    [budget]              *1
+#+end_src
