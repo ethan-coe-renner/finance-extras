@@ -1,0 +1,11 @@
+image: fedora/latest
+secrets:
+  - 572eda84-1c09-4239-a0f3-0c8d1a8df472
+sources:
+  - git@git.sr.ht:~code-runner/finance-extras
+environment:
+  GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
+tasks:
+  - mirror: |
+      cd finance-extras
+      git push --force --mirror git@github.com:ethan-coe-renner/finance-extras.git
