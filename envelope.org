@@ -5,9 +5,10 @@ This file describes and implements an envelope budgeting system for [[https://hl
 The ledger snippets herein are tangled to =envelope.hledger= to be included into a journal.
 
 * Filling the Budget
-We separate our assets into two kinds of accounts, "on budget" and "off budget". On budget accounts are named as follows: =assets:b:*=. So, we want our budget total to always equal the total of the accounts matching this pattern. We do this with the following auto posting.
+We separate our assets into two kinds of accounts, "on budget" and "off budget". On budget accounts are named as follows: =assets:b:*=. So, we want our budget total to always equal the total of the accounts matching this pattern. We do this with the following auto posting. We also declare our budget account here.
 
 #+begin_src ledger
+account budget
 = ^assets:b:
     (budget)    *1
 #+end_src
@@ -20,6 +21,7 @@ We always want to have money set aside to pay off all credit cards in our budget
 The following auto posting accomplishes this.
 
 #+begin_src ledger
+account budget:spend:cc
 = ^liabilities:cc
     [budget]            *1
     [budget:spend:cc]   *-1
@@ -45,6 +47,7 @@ Here, I define an emacs lisp function which takes a =envelope= as input and retu
 #+begin_src emacs-lisp :var envelope="default" :tangle none
 (message
  "
+account budget:spend:%1$s
 = ^expenses:%1$s
     [budget:spend:%1$s]    *-1
 "
@@ -92,6 +95,20 @@ Rent funds should be used for monthly rent.
 <<generate-envelope(envelope="rent")>>
 #+end_src
 
+*** Fixed
+Fixed funds should only be used for fixed costs (which don't fit in a different envelope). This includes car insurance, internet and cell service, car registration, etc.
+
+#+begin_src ledger :noweb yes
+<<generate-envelope(envelope="fixed")>>
+#+end_src
+
+*** Health
+Health funds should be used for healthcare purchases.
+
+#+begin_src ledger :noweb yes
+<<generate-envelope(envelope="health")>>
+#+end_src
+
 *** Subscriptions
 Subscriptions funds should be used for various subscriptions. Including streaming, software, deliveries, or membership fees.
 
@@ -132,6 +149,19 @@ Discretionary funds can be used for anything.
 
 #+begin_src ledger :noweb yes
 <<generate-envelope(envelope="discretionary")>>
+#+end_src
+
+*** Savings Envelopes
+Savings envelopes are ones which aren't meant to be spent from, they should only be used to set aside money until it is to be spent. Once it is to be spent, it should be moved to a spending envelope.
+
+We declare our savings envelopes here.
+
+TODO: we need to figure out how we could make these "ephemeral", so that once the goal is achieved, the account can go away. Maybe we can just remove every instance of these accounts once they aren't needed?
+
+#+begin_src ledger
+account budget:save:replacement:car
+account budget:save:replacement:laptop
+account budget:save:replacement:phone
 #+end_src
 
 ** Catching Unmatched Expenses
