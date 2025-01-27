@@ -1,5 +1,5 @@
 #+title: Envelope Budgeting with Hledger
-#+PROPERTY: header-args :tangle "envelope.hledger"
+#+PROPERTY: header-args :tangle "~/finance/envelope.hledger"
 
 This file describes and implements an envelope budgeting system for hledger.
 The ledger snippets herein are tangled to =envelope.hledger= to be included into a journal.
