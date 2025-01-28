@@ -30,7 +30,7 @@ account budget:spend:cc
 * Envelopes
 Finally, we define our envelopes. Unfortunately, this is somewhat tedious as we need an auto posting for each envelope. We will use emacs lisp to generate these, but the basic pattern is as follows:
 
-#+begin_src ledger :tangle none
+#+begin_src ledger :tangle no
 = ^expenses:envelope
     [budget:spend:envelope]  *-1
 #+end_src
@@ -43,7 +43,7 @@ As described above, we have to create separate auto-postings for each envelope. 
 Here, I define an emacs lisp function which takes a =envelope= as input and returns the string of the auto posting rule.
 
 #+name: generate-envelope
-#+begin_src emacs-lisp :var envelope="default" :tangle none
+#+begin_src emacs-lisp :var envelope="default" :tangle no
 (message
  "
 account expenses:%1$s
@@ -185,7 +185,7 @@ account assets:b
 ** Initializing envelopes
 In order to initialize envelopes, first initialize accounts in the =current.journal= and note the total amount in =assets:b= subaccounts (or in the =budget= account, if you've included =envelope.hledger=), this is the budgetable amount. Then, create a =budget.journal= account, and add an initialization transaction as below:
 
-#+begin_src ledger :tangle none
+#+begin_src ledger :tangle no
 2025-01-24 opening budget
     [budget]
     [budget:spend:food]            $200
@@ -200,7 +200,7 @@ Allocating a new paycheck/income follows exactly the same process: enter the inc
 ** Moving Money
 Sometimes you may need to reallocate funds from one envelope to another. This is done trivially as any other transaction (but, again, should be done in =budget.journal= instead of =current.journal=):
 
-#+begin_src ledger :tangle none
+#+begin_src ledger :tangle no
 2025-01-27 budget reallocation
     [budget:spend:supplies]  $10
     [budget:spend:food]
