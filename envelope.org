@@ -28,7 +28,7 @@ account budget:spend:cc
 #+end_src
 
 * Envelopes
-Finally, we define our envelopes. Unfortunately, this is somewhat tedious as we need an auto posting for each envelope. We will use emacs lisp to generate these, but the basic pattern is as follows:
+Finally, we define our envelopes. Unfortunately, this is somewhat tedious as we need an auto posting for each envelope. We will use emacs lisp to generate these dynamically, but the basic pattern is as follows:
 
 #+begin_src ledger :tangle no
 = ^expenses:envelope
@@ -40,7 +40,7 @@ This means that for any posting which affects an expense account with the envelo
 ** Dynamically Generate Auto Postings for Envelopes
 As described above, we have to create separate auto-postings for each envelope. This is tedious and error prone, so lets generate them dynamically.
 
-Here, I define an emacs lisp function which takes a =envelope= as input and returns the string of the auto posting rule.
+Here, I define an emacs lisp expression which takes a =envelope= as input and returns the string of the auto posting rule, as well as a couple account declarations.
 
 #+name: generate-envelope
 #+begin_src emacs-lisp :var envelope="default" :tangle no
@@ -156,7 +156,7 @@ Savings envelopes are ones which aren't meant to be spent from, they should only
 
 We declare our savings envelopes here.
 
-TODO: we need to figure out how we could make these "ephemeral", so that once the goal is achieved, the account can go away. Maybe we can just remove every instance of these accounts once they aren't needed?
+TODO: we want to figure out how we could make these "ephemeral", so that once the goal is achieved, the account can go away. Maybe we can just remove every instance of these accounts once they aren't needed, pretending it never existed?
 
 #+begin_src ledger
 account budget:save:replacement:car
@@ -183,7 +183,7 @@ account assets:b
 #+end_src
 
 ** Initializing envelopes
-In order to initialize envelopes, first initialize accounts in the =current.journal= and note the total amount in =assets:b= subaccounts (or in the =budget= account, if you've included =envelope.hledger=), this is the budgetable amount. Then, create a =budget.journal= account, and add an initialization transaction as below:
+In order to initialize envelopes, first initialize accounts in the =current.journal= and note the total amount in =assets:b= subaccounts (or in the =budget= account, if we've included =envelope.hledger=), this is the budgetable amount. Then, create a =budget.journal= account, and add an initialization transaction as below:
 
 #+begin_src ledger :tangle no
 2025-01-24 opening budget
@@ -198,7 +198,7 @@ This distributes $305 to the =food=, =transportation=, and =supplies= envelopes 
 Allocating a new paycheck/income follows exactly the same process: enter the income transaction in =current.journal=, note the new balance of =budget=, and allocate that money as just above.
 
 ** Moving Money
-Sometimes you may need to reallocate funds from one envelope to another. This is done trivially as any other transaction (but, again, should be done in =budget.journal= instead of =current.journal=):
+Sometimes we may need to reallocate funds from one envelope to another. This is done trivially as any other transaction (but, again, should be done in =budget.journal= instead of =current.journal=):
 
 #+begin_src ledger :tangle no
 2025-01-27 budget reallocation
