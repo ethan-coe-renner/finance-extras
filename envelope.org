@@ -33,7 +33,6 @@ Finally, we define our envelopes. Unfortunately, this is somewhat tedious as we 
 #+begin_src ledger :tangle none
 = ^expenses:envelope
     [budget:spend:envelope]  *-1
-    [budget]                 *1
 #+end_src
 
 This means that for any posting which affects an expense account with the envelope name (including subaccounts like =expenses:envelope:subaccount=), there will be a transfer from that spending envelope to the top level =budget= account. The credit card rule or the assets rules (defined above) will then transfer that money out of that top level =budget= account.
@@ -47,6 +46,7 @@ Here, I define an emacs lisp function which takes a =envelope= as input and retu
 #+begin_src emacs-lisp :var envelope="default" :tangle none
 (message
  "
+account expenses:%1$s
 account budget:spend:%1$s
 = ^expenses:%1$s
     [budget:spend:%1$s]    *-1
@@ -175,8 +175,33 @@ This rule matches out the =[budget:spend:envelope]  *-1= posting from each of th
 #+end_src
 
 * Using the envelopes
-TODO: Explain how to use the system practically
+We use the file =budget.journal= for all budget bookkeeping (initializing envelope amounts, transferring between envelopes, allocating income, etc). In general, the primary =current.journal= should include *no* entries which reference budget accounts. This way, the =include envelope.hledger= directive can be removed, and the ledger is still perfectly usable. This is useful when archiving ledgers, the envelopes aren't relevant, but the expense, asset, etc reports likely are. We include the =budget.journal= file below, this way that file is always included when the envelope system is included.
 
 #+begin_src ledger
 include budget.journal
+account assets:b
+#+end_src
+
+** Initializing envelopes
+In order to initialize envelopes, first initialize accounts in the =current.journal= and note the total amount in =assets:b= subaccounts (or in the =budget= account, if you've included =envelope.hledger=), this is the budgetable amount. Then, create a =budget.journal= account, and add an initialization transaction as below:
+
+#+begin_src ledger :tangle none
+2025-01-24 opening budget
+    [budget]
+    [budget:spend:food]            $200
+    [budget:spend:transportation]  $75
+    [budget:spend:supplies]        $30
+#+end_src
+
+This distributes $305 to the =food=, =transportation=, and =supplies= envelopes from the =budget= account, which has been filled from the =assets:b= accounts by the earlier auto posting.
+
+Allocating a new paycheck/income follows exactly the same process: enter the income transaction in =current.journal=, note the new balance of =budget=, and allocate that money as just above.
+
+** Moving Money
+Sometimes you may need to reallocate funds from one envelope to another. This is done trivially as any other transaction (but, again, should be done in =budget.journal= instead of =current.journal=):
+
+#+begin_src ledger :tangle none
+2025-01-27 budget reallocation
+    [budget:spend:supplies]  $10
+    [budget:spend:food]
 #+end_src
