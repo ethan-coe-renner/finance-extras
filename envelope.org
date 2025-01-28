@@ -173,3 +173,10 @@ This rule matches out the =[budget:spend:envelope]  *-1= posting from each of th
 = ^expenses:
     [budget]              *1
 #+end_src
+
+* Using the envelopes
+TODO: Explain how to use the system practically
+
+#+begin_src ledger
+include budget.journal
+#+end_src
