@@ -119,8 +119,23 @@ Subscriptions funds should be used for various subscriptions. Including streamin
 *** Investing
 Investing should be a holding area for funds which will be invested. These will generally be set up as automatic deposits.
 
-#+begin_src ledger :noweb yes
-<<generate-envelope(envelope="investing")>>
+Investing is a special case because funds don't transfer to an expense account but rather to another asset account. We can't use the envelope pattern we've used for other envelopes because it would add a negative balance to the budget on the initial opening balance transaction.
+
+Instead, we set up an investing subaccount on one of our asset accounts. This will be the real account from which transfers to investing accounts will be made. In my case, this is my =assets:b:co:saving= account. This subaccount will always be empty, but we can use it when making a transfer to an investment account.
+
+In the common case of an investment transaction from the investment subaccount to an investment asset account, the auto posting will do the following:
+
+- As a real transaction, move money from the upper level =assets:b:co:saving= account to its =investing= subaccount to cover the transfer.
+- Also, move money from the =investing= envelope to the top level =budget= account to cover the transfer created out of =budget= (by a previous auto posting)
+
+#+begin_src ledger
+account assets:b:co:saving:investing
+account budget:spend:investing
+= ^assets:b:co:saving:investing
+    assets:b:co:saving:investing  *-1
+    assets:b:co:saving  *1
+    [budget:spend:investing]  *1
+    [budget]
 #+end_src
 
 *** Donations
