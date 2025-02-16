@@ -128,6 +128,8 @@ In the common case of an investment transaction from the investment subaccount t
 - As a real transaction, move money from the upper level =assets:b:co:saving= account to its =investing= subaccount to cover the transfer.
 - Also, move money from the =investing= envelope to the top level =budget= account to cover the transfer created out of =budget= (by a previous auto posting)
 
+TODO: might need to use tags, this breaks my invariant of using only real asset accounts in the main journal. Also, list out these invariants somewhere formal.
+
 #+begin_src ledger
 account assets:b:co:saving:investing
 account budget:spend:investing
